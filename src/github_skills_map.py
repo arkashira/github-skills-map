@@ -1,62 +1,45 @@
+import argparse
 import json
 from dataclasses import dataclass
-from datetime import datetime
 from typing import List
-
-@dataclass
-class Commit:
-    """Represents a GitHub commit."""
-    sha: str
-    message: str
-    timestamp: datetime
-
-@dataclass
-class PullRequest:
-    """Represents a GitHub pull request."""
-    number: int
-    title: str
-    body: str
-    timestamp: datetime
+import os
+import sys
 
 @dataclass
 class Skill:
-    """Represents a developer skill."""
     name: str
     level: int
 
-def generate_github_api_token(username: str, password: str) -> str:
-    """Generates a GitHub API token."""
-    # Simulate token generation for demonstration purposes
-    return f"token-{username}"
+def fetch_github_data(username: str, token: str = None) -> List[Skill]:
+    # Simulate fetching data from GitHub
+    return [Skill("Python", 5), Skill("Java", 3), Skill("C++", 4)]
 
-def fetch_user_commits(username: str, token: str) -> List[Commit]:
-    """Fetches a user's recent commits."""
-    # Simulate commit data for demonstration purposes
-    return [
-        Commit("abc123", "Initial commit", datetime(2022, 1, 1)),
-        Commit("def456", "Added feature", datetime(2022, 1, 15)),
-    ]
+def extract_skills(data: List[Skill]) -> List[Skill]:
+    return data
 
-def fetch_user_pull_requests(username: str, token: str) -> List[PullRequest]:
-    """Fetches a user's recent pull requests."""
-    # Simulate pull request data for demonstration purposes
-    return [
-        PullRequest(1, "Fix bug", "Bug fix", datetime(2022, 1, 10)),
-        PullRequest(2, "Add feature", "New feature", datetime(2022, 1, 20)),
-    ]
+def generate_graph(skills: List[Skill]) -> str:
+    graph = ""
+    for skill in skills:
+        graph += f"{skill.name}: {skill.level}\n"
+    return graph
 
-def calculate_skills(commits: List[Commit], pull_requests: List[PullRequest]) -> List[Skill]:
-    """Calculates skills based on commit and pull request data."""
-    skills = []
-    for commit in commits:
-        # Simulate skill calculation for demonstration purposes
-        skills.append(Skill("Python", 1))
-    for pull_request in pull_requests:
-        # Simulate skill calculation for demonstration purposes
-        skills.append(Skill("JavaScript", 1))
-    return skills
+def save_graph(graph: str, output_path: str) -> None:
+    with open(output_path, "w") as f:
+        f.write(graph)
 
-def display_skills(skills: List[Skill]) -> str:
-    """Displays skills in a visual representation."""
-    # Simulate skill display for demonstration purposes
-    return json.dumps([skill.__dict__ for skill in skills])
+def main(argv=None) -> None:
+    if argv is None:
+        argv = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("username", help="GitHub username")
+    parser.add_argument("--token", help="GitHub token (optional)")
+    parser.add_argument("--output", help="Output path", default="skills.txt")
+    args = parser.parse_args(argv)
+    data = fetch_github_data(args.username, args.token)
+    skills = extract_skills(data)
+    graph = generate_graph(skills)
+    save_graph(graph, args.output)
+    sys.exit(0)  # Exit with code 0
+
+if __name__ == "__main__":
+    main()

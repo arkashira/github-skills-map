@@ -1,59 +1,36 @@
 import pytest
-from datetime import datetime
-from github_skills_map import (
-    generate_github_api_token,
-    fetch_user_commits,
-    fetch_user_pull_requests,
-    calculate_skills,
-    display_skills,
-    Commit,
-    PullRequest,
-    Skill,
-)
+from github_skills_map import fetch_github_data, extract_skills, generate_graph, save_graph, Skill, main
+import sys
 
-def test_generate_github_api_token():
-    username = "testuser"
-    password = "testpassword"
-    token = generate_github_api_token(username, password)
-    assert token == f"token-{username}"
+def test_fetch_github_data():
+    data = fetch_github_data("test_user")
+    assert len(data) == 3
+    assert data[0].name == "Python"
+    assert data[0].level == 5
 
-def test_fetch_user_commits():
-    username = "testuser"
-    token = generate_github_api_token(username, "testpassword")
-    commits = fetch_user_commits(username, token)
-    assert len(commits) == 2
-    assert isinstance(commits[0], Commit)
+def test_extract_skills():
+    data = [Skill("Python", 5), Skill("Java", 3), Skill("C++", 4)]
+    skills = extract_skills(data)
+    assert skills == data
 
-def test_fetch_user_pull_requests():
-    username = "testuser"
-    token = generate_github_api_token(username, "testpassword")
-    pull_requests = fetch_user_pull_requests(username, token)
-    assert len(pull_requests) == 2
-    assert isinstance(pull_requests[0], PullRequest)
+def test_generate_graph():
+    skills = [Skill("Python", 5), Skill("Java", 3), Skill("C++", 4)]
+    graph = generate_graph(skills)
+    assert graph == "Python: 5\nJava: 3\nC++: 4\n"
 
-def test_calculate_skills():
-    commits = [
-        Commit("abc123", "Initial commit", datetime(2022, 1, 1)),
-        Commit("def456", "Added feature", datetime(2022, 1, 15)),
-    ]
-    pull_requests = [
-        PullRequest(1, "Fix bug", "Bug fix", datetime(2022, 1, 10)),
-        PullRequest(2, "Add feature", "New feature", datetime(2022, 1, 20)),
-    ]
-    skills = calculate_skills(commits, pull_requests)
-    assert len(skills) == 4
-    assert isinstance(skills[0], Skill)
+def test_save_graph(tmp_path):
+    graph = "Python: 5\nJava: 3\nC++: 4\n"
+    output_path = tmp_path / "skills.txt"
+    save_graph(graph, str(output_path))
+    assert output_path.exists()
+    with open(output_path, "r") as f:
+        assert f.read() == graph
 
-def test_display_skills():
-    skills = [
-        Skill("Python", 1),
-        Skill("JavaScript", 1),
-    ]
-    displayed_skills = display_skills(skills)
-    assert displayed_skills == '[{"name": "Python", "level": 1}, {"name": "JavaScript", "level": 1}]'
-
-def test_edge_case_calculate_skills():
-    commits = []
-    pull_requests = []
-    skills = calculate_skills(commits, pull_requests)
-    assert skills == []
+def test_main(tmp_path, capsys):
+    output_path = tmp_path / "skills.txt"
+    with pytest.raises(SystemExit) as exit_info:
+        main(["test_user", "--output", str(output_path)])
+    assert exit_info.value.code == 0
+    assert output_path.exists()
+    with open(output_path, "r") as f:
+        assert f.read() == "Python: 5\nJava: 3\nC++: 4\n"

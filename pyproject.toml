@@ -4,8 +4,8 @@ build-backend = "poetry.masonry.api"
 
 [tool.poetry]
 name = "github-skills-map"
-version = "0.1.0"
-description = "Visualize developer skills from GitHub activity"
+version = "1.0.0"
+description = "Generate a visual skills map from your GitHub activity"
 
 [tool.poetry.dependencies]
 python = "^3.8"
