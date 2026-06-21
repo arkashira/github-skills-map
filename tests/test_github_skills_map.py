@@ -1,36 +1,45 @@
 import pytest
-from github_skills_map import fetch_github_data, extract_skills, generate_graph, save_graph, Skill, main
-import sys
+from github_skills_map import (
+    authenticate,
+    fetch_profile,
+    list_repositories,
+    select_repositories,
+    OAuthToken,
+)
 
-def test_fetch_github_data():
-    data = fetch_github_data("test_user")
-    assert len(data) == 3
-    assert data[0].name == "Python"
-    assert data[0].level == 5
+def test_authenticate_happy_path():
+    token = authenticate("alice_id", "secret", "authcode123")
+    assert isinstance(token, OAuthToken)
+    assert token.access_token == "alice_id:authcode123"
+    assert token.scope == "repo"
 
-def test_extract_skills():
-    data = [Skill("Python", 5), Skill("Java", 3), Skill("C++", 4)]
-    skills = extract_skills(data)
-    assert skills == data
+def test_authenticate_missing_params():
+    with pytest.raises(ValueError):
+        authenticate("", "secret", "code")
 
-def test_generate_graph():
-    skills = [Skill("Python", 5), Skill("Java", 3), Skill("C++", 4)]
-    graph = generate_graph(skills)
-    assert graph == "Python: 5\nJava: 3\nC++: 4\n"
+def test_fetch_profile_happy_path():
+    token = authenticate("alice_id", "secret", "code")
+    profile = fetch_profile(token)
+    assert profile["login"] == "alice_id"
+    assert profile["public_repos"] == 3
 
-def test_save_graph(tmp_path):
-    graph = "Python: 5\nJava: 3\nC++: 4\n"
-    output_path = tmp_path / "skills.txt"
-    save_graph(graph, str(output_path))
-    assert output_path.exists()
-    with open(output_path, "r") as f:
-        assert f.read() == graph
+def test_fetch_profile_invalid_token():
+    with pytest.raises(ValueError):
+        fetch_profile(OAuthToken("", ""))
 
-def test_main(tmp_path, capsys):
-    output_path = tmp_path / "skills.txt"
-    with pytest.raises(SystemExit) as exit_info:
-        main(["test_user", "--output", str(output_path)])
-    assert exit_info.value.code == 0
-    assert output_path.exists()
-    with open(output_path, "r") as f:
-        assert f.read() == "Python: 5\nJava: 3\nC++: 4\n"
+def test_list_repositories_happy_path():
+    repos = list_repositories("alice_id")
+    assert repos == ["repo1", "repo2", "repo3"]
+
+def test_list_repositories_user_not_found():
+    with pytest.raises(ValueError):
+        list_repositories("unknown_user")
+
+def test_select_repositories_happy_path():
+    selected = select_repositories("alice_id", ["repo1", "repo3"])
+    assert set(selected) == {"repo1", "repo3"}
+
+def test_select_repositories_missing_repo():
+    with pytest.raises(ValueError) as exc:
+        select_repositories("alice_id", ["repo1", "nonexistent"])
+    assert "nonexistent" in str(exc.value)
