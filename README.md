@@ -1,3 +1,4 @@
 # GitHub Skills Map
-Generate a visual skills map from your GitHub activity.
+A Python package for generating GitHub skills maps.
 ## Installation
+To install the package, run the following command:

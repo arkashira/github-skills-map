@@ -1,10 +1,14 @@
-[project]
-name = "github-skills-map"
-version = "0.1.0"
-description = "A minimal GitHub skills mapping tool."
-requires-python = ">=3.8"
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
 
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-q"
-testpaths = ["tests"]
+[tool.poetry]
+name = "github-skills-map"
+version = "1.0.0"
+description = "A Python package for generating GitHub skills maps"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"

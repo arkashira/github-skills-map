@@ -1,38 +1,58 @@
 import json
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from datetime import datetime, timedelta
+from collections import defaultdict
 
 @dataclass
-class OAuthToken:
-    access_token: str
-    scope: str
+class Commit:
+    date: str
+    languages: list
+    frameworks: list
 
-def authenticate(client_id: str, client_secret: str, auth_code: str) -> OAuthToken:
-    """Simulated OAuth authentication"""
-    if not all([client_id, client_secret, auth_code]):
-        raise ValueError("Missing authentication parameters")
-    return OAuthToken(f"{client_id}:{auth_code}", "repo")
+class GitHubSkillsMap:
+    def __init__(self):
+        self.cache = {}
+        self.cache_expiration = 24 * 60 * 60  # 24 hours
 
-def fetch_profile(token: OAuthToken) -> Dict[str, Any]:
-    """Fetch user profile information"""
-    if not token.access_token or not token.scope:
-        raise ValueError("Invalid OAuth token")
-    # Simulated profile data
-    return {"login": "alice_id", "public_repos": 3}
+    def get_snapshot(self, username):
+        if username in self.cache:
+            snapshot, expiration = self.cache[username]
+            if datetime.now().timestamp() < expiration:
+                return snapshot
+        commits = self.get_commits(username)
+        snapshot = self.generate_snapshot(commits)
+        self.cache[username] = (snapshot, datetime.now().timestamp() + self.cache_expiration)
+        return snapshot
 
-def list_repositories(user_id: str) -> List[str]:
-    """List available repositories"""
-    if user_id == "unknown_user":
-        raise ValueError("User not found")
-    # Simulated repository data
-    return ["repo1", "repo2", "repo3"]
+    def get_commits(self, username):
+        # Simulate fetching commits from GitHub API
+        # For demonstration purposes, return some sample data
+        return [
+            Commit("2022-01-01", ["Python", "JavaScript"], ["Django", "React"]),
+            Commit("2022-01-02", ["Python", "Java"], ["Django", "Spring"]),
+            Commit("2022-01-03", ["JavaScript", "C++"], ["React", "Qt"]),
+        ]
 
-def select_repositories(user_id: str, repository_names: List[str]) -> set:
-    """Select repositories to track"""
-    available_repos = list_repositories(user_id)
-    selected_repos = set()
-    for repo in repository_names:
-        if repo not in available_repos:
-            raise ValueError(f"Repository '{repo}' not found")
-        selected_repos.add(repo)
-    return selected_repos
+    def generate_snapshot(self, commits):
+        commits_per_day = defaultdict(int)
+        languages = defaultdict(int)
+        frameworks = defaultdict(int)
+        for commit in commits:
+            date = datetime.strptime(commit.date, "%Y-%m-%d").date()
+            commits_per_day[date] += 1
+            for language in commit.languages:
+                languages[language] += 1
+            for framework in commit.frameworks:
+                frameworks[framework] += 1
+        top_languages = sorted(languages.items(), key=lambda x: x[1], reverse=True)
+        framework_badges = sorted(frameworks.items(), key=lambda x: x[1], reverse=True)
+        return {
+            "commits_per_day": dict(commits_per_day),
+            "top_languages": top_languages,
+            "framework_badges": framework_badges,
+        }
+
+    def render_snapshot(self, snapshot):
+        # Simulate rendering the snapshot as a bar chart and list of languages and frameworks
+        # For demonstration purposes, return a simple string representation
+        return f"Commits per day: {snapshot['commits_per_day']}\nTop languages: {snapshot['top_languages']}\nFramework badges: {snapshot['framework_badges']}"
